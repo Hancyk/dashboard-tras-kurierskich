@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NordLine Kurier — Panel tras kurierskich</title>
+<style>
+  :root{
+    --font-display:'Arial Narrow',Arial,sans-serif;
+    --font-body:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
+    --font-mono:'Consolas','SFMono-Regular','Courier New',monospace;
+    --ink:#1B1B1F;
+    --paper:#F6F5F1;
+    --card:#FFFFFF;
+    --yellow:#F4A300;
+    --red:#2A6F97;
+    --slate:#5B6169;
+    --line:#E4E1D8;
+    --green:#1F8A4C;
+    --amber:#C77F1A;
+    --trasaA:#2A6F97;
+    --lucb:#1B1B1F;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:var(--font-body); -webkit-font-smoothing:antialiased;
+  }
+  .mono{font-family:var(--font-mono);}
+  header.top{
+    background:var(--ink); color:#fff; padding:22px clamp(16px,4vw,48px);
+    display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px;
+    border-bottom:6px solid var(--yellow);
+  }
+  .brand{display:flex; align-items:baseline; gap:12px;}
+  .brand .mark{
+    background:var(--yellow); color:var(--ink); font-family:var(--font-display);
+    font-weight:800; font-size:22px; padding:4px 10px; letter-spacing:1px;
+  }
+  .brand h1{font-family:var(--font-display); font-weight:700; font-size:26px; margin:0; letter-spacing:.5px; text-transform:uppercase;}
+  .brand .sub{font-size:12.5px; color:#C9CBCE; font-family:var(--font-mono); margin-top:2px;}
+  .period-pill{
+    font-family:var(--font-mono); font-size:12.5px; background:#2A2A30; color:#EDEDED;
+    padding:6px 12px; border-radius:20px; border:1px solid #3a3a42;
+  }
+
+  .controls{
+    padding:18px clamp(16px,4vw,48px); display:flex; gap:24px; flex-wrap:wrap; align-items:center;
+    background:var(--card); border-bottom:1px solid var(--line); position:sticky; top:0; z-index:20;
+  }
+  .seg{display:flex; background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:3px; gap:2px;}
+  .seg button{
+    border:none; background:transparent; font-family:var(--font-display); font-weight:700;
+    font-size:15px; letter-spacing:.5px; text-transform:uppercase; padding:9px 18px; border-radius:8px;
+    cursor:pointer; color:var(--slate); transition:.15s;
+  }
+  .seg button.active{background:var(--ink); color:#fff;}
+  .seg.route button.active{background:var(--red); color:#fff;}
+  .view-label{font-family:var(--font-mono); font-size:11px; text-transform:uppercase; letter-spacing:1px; color:var(--slate); margin-right:-14px;}
+  .badge{
+    font-family:var(--font-mono); font-size:11.5px; padding:5px 10px; border-radius:6px; margin-left:auto;
+  }
+  .badge.fin{background:#FFF3D6; color:#8A5A00; border:1px solid #F0D28A;}
+  .badge.ops{background:#E7F3EA; color:#1F6B37; border:1px solid #B9DDC3;}
+
+  main{padding:24px clamp(16px,4vw,48px) 60px; max-width:1320px; margin:0 auto;}
+
+  .kpis{display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:14px; margin-bottom:24px;}
+  .kpi{
+    background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 18px;
+    border-top:4px solid var(--yellow); position:relative;
+  }
+  .kpi .lbl{font-family:var(--font-mono); font-size:11px; text-transform:uppercase; letter-spacing:.6px; color:var(--slate);}
+  .kpi .val{font-family:var(--font-display); font-weight:800; font-size:32px; margin-top:4px; line-height:1;}
+  .kpi .sub{font-size:12px; color:var(--slate); margin-top:4px;}
+  .kpi.warn{border-top-color:var(--amber);}
+  .kpi.good{border-top-color:var(--green);}
+
+  .kpi-target-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:16px;}
+  .route-card{border:1px solid var(--line); border-radius:12px; padding:16px 18px 6px;}
+  .route-card h3{margin:0 0 10px; font-family:var(--font-display); text-transform:uppercase; font-size:18px; display:flex; align-items:center; gap:10px; font-weight:700;}
+  .kpi-line{display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px dashed var(--line); font-size:13px; gap:10px;}
+  .kpi-line:last-child{border-bottom:none;}
+  .kpi-line .lbl2{color:var(--slate); font-family:var(--font-mono); font-size:11.5px; text-transform:uppercase; letter-spacing:.3px;}
+  .kpi-line .right2{display:flex; align-items:center; gap:8px; white-space:nowrap;}
+  .kpi-line .val2{font-family:var(--font-mono); font-weight:700; font-size:14px;}
+  .pill{display:inline-block; padding:3px 10px; border-radius:20px; font-size:10.5px; font-weight:700; font-family:var(--font-mono); letter-spacing:.3px;}
+  .pill.green{background:#E7F3EA; color:#1F6B37; border:1px solid #B9DDC3;}
+  .pill.red{background:#FCE4E5; color:#B00020; border:1px solid #F3B8BE;}
+
+  .panel{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:20px 22px; margin-bottom:22px;}
+  .panel h2{font-family:var(--font-display); text-transform:uppercase; letter-spacing:.5px; font-size:20px; margin:0 0 4px;}
+  .panel .desc{font-size:12.5px; color:var(--slate); margin-bottom:16px;}
+  .chart-wrap{height:300px;}
+
+  /* Waybill strip - signature element */
+  .strips{display:flex; flex-direction:column; gap:6px;}
+  .strip-row{display:grid; grid-template-columns:96px 1fr 60px; align-items:center; gap:10px;}
+  .strip-date{font-family:var(--font-mono); font-size:12px; color:var(--slate);}
+  .strip-track{
+    display:flex; height:22px; border-radius:4px; overflow:hidden; background:#EFEDE6; border:1px solid var(--line);
+  }
+  .seg-block{height:100%;}
+  .strip-km{font-family:var(--font-mono); font-size:11.5px; color:var(--slate); text-align:right;}
+  .legend{display:flex; gap:16px; flex-wrap:wrap; margin-top:14px; font-size:11.5px; font-family:var(--font-mono); color:var(--slate);}
+  .legend span{display:inline-flex; align-items:center; gap:6px;}
+  .sw{width:11px; height:11px; border-radius:2px; display:inline-block;}
+
+  table{width:100%; border-collapse:collapse; font-size:13px;}
+  thead th{
+    text-align:left; font-family:var(--font-mono); font-size:11px; text-transform:uppercase;
+    letter-spacing:.4px; color:var(--slate); border-bottom:2px solid var(--ink); padding:8px 10px; white-space:nowrap;
+  }
+  tbody td{padding:8px 10px; border-bottom:1px solid var(--line); font-family:var(--font-mono); white-space:nowrap;}
+  tbody tr:hover{background:#FBFAF6;}
+  tbody td.route{font-family:var(--font-body); font-weight:600;}
+  .tag{display:inline-block; padding:2px 8px; border-radius:12px; font-size:11px; font-weight:600;}
+  .tag.trasaa{background:#DCEBF5; color:#2A6F97;}
+  .tag.trasab{background:#E7E7EA; color:var(--ink);}
+  .num-bad{color:var(--red); font-weight:600;}
+  .num-good{color:var(--green);}
+  .money-row{color:var(--amber);}
+  tfoot td{font-weight:700; border-top:2px solid var(--ink); border-bottom:none; padding-top:10px;}
+
+  .foot-note{font-size:11.5px; color:var(--slate); margin-top:16px; line-height:1.5; border-top:1px dashed var(--line); padding-top:12px;}
+  .hide{display:none !important;}
+  @media(max-width:640px){
+    .strip-row{grid-template-columns:70px 1fr 50px;}
+    .kpi .val{font-size:26px;}
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">
+    <span class="mark">NORDLINE</span>
+    <div>
+      <h1>Panel tras kurierskich</h1>
+      <div class="sub">Studium przypadku · podwykonawca kurierski · dane syntetyczne</div>
+    </div>
+  </div>
+  <div class="period-pill" id="periodPill">01–31.08.2026 (dane syntetyczne) · faktury demo-2026-001 + demo-2026-002</div>
+</header>
+
+<div class="controls">
+  <div class="view-label">Widok</div>
+  <div class="seg">
+    <button id="btnFin" class="active" onclick="setView('fin')">Finansowy</button>
+    <button id="btnOps" onclick="setView('ops')">Operacyjny</button>
+  </div>
+  <div class="view-label">Trasa</div>
+  <div class="seg route">
+    <button id="rAll" class="active" onclick="setRoute('all')">Razem</button>
+    <button id="rTrasaA" onclick="setRoute('Trasa A')">Trasa A</button>
+    <button id="rTrasaB" onclick="setRoute('Trasa B')">Trasa B</button>
+  </div>
+  <div class="badge fin" id="viewBadge">Dane finansowe widoczne — tylko dla właściciela</div>
+</div>
+
+<main>
+
+  <div class="kpis" id="kpiRow"></div>
+
+  <div class="panel">
+    <h2 id="chartTitle">Kwota netto dziennie</h2>
+    <div class="desc" id="chartDesc">Słupki wg trasy, linia — narastająco w okresie.</div>
+    <div class="chart-wrap"><canvas id="mainChart"></canvas></div>
+    <div class="legend" id="chartLegend"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Cele KPI — SPR i %Undel</h2>
+    <div class="desc">SPR = docelowa liczba stopów na trasę / dzień (Trasa A: 23, Trasa B: 37). %Undel = odsetek stopów niezrealizowanych, cel &lt;2% na obu trasach. "SPR +8%" to podwyższony próg (cel bazowy × 1,08) — liczony za cały okres 01–31.08.2026, niezależnie od filtra powyżej. <strong>%Undel liczony po korekcie:</strong> stop ze statusem NH (not home), dla którego tego samego dnia pojawia się status HN SVP (przekazanie do servicepointu), nie jest liczony jako niezrealizowany — traktujemy go jako doręczony do punktu odbioru. Inne przyczyny (RD, CA, BA, NR, FP) zawsze liczą się jako niezrealizowane.</div>
+    <div class="kpi-target-grid" id="kpiTargetGrid"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Pasek trasy — skład stopów dzień po dniu</h2>
+    <div class="desc">Każdy pasek = jeden dzień jednej trasy. Segmenty pokazują udział pułapów cenowych (Band) w stopach zrealizowanych; czerwony hatch = stopy niezrealizowane (Fixed).</div>
+    <div class="strips" id="strips"></div>
+    <div class="legend">
+      <span><i class="sw" style="background:#F4A300"></i>Band 1</span>
+      <span><i class="sw" style="background:#E8A33D"></i>Band 2</span>
+      <span><i class="sw" style="background:#C77F1A"></i>Band 3</span>
+      <span><i class="sw" style="background:#8A5A00"></i>Band 4</span>
+      <span><i class="sw" style="background:repeating-linear-gradient(45deg,#2A6F97,#2A6F97 3px,#fff 3px,#fff 6px)"></i>Niezrealizowane</span>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2 id="tableTitle">Zestawienie dzienne</h2>
+    <div class="desc" id="tableDesc"></div>
+    <div style="overflow-x:auto;">
+      <table id="dataTable">
+        <thead><tr id="tableHead"></tr></thead>
+        <tbody id="tableBody"></tbody>
+        <tfoot><tr id="tableFoot"></tr></tfoot>
+      </table>
+    </div>
+    <div class="foot-note" id="footNote"></div>
+  </div>
+
+</main>
+
+<script>
+// ===================== DANE ŹRÓDŁOWE (z faktur PL260700022 i PL260700095) =====================
+// b = [Band1, Band2, Band3, Band4] liczba stopów zrealizowanych w danym paśmie cenowym
+// fixed = liczba stopów FAKTYCZNIE niezrealizowanych danego dnia (po korekcie).
+//   Metodologia: jeśli tego dnia w wierszu Fixed występuje kod NH ("not home"), a w opisie
+//   wiersza Band tego samego dnia występuje kod HN SVP ("przekazanie do servicepointu") —
+//   przesyłka została doręczona do punktu odbioru i NIE liczy się jako niezrealizowana.
+//   Offset stosowany do wysokości mnożnika (np. 2xNH i 3xHN SVP => 0 niezrealizowanych z NH,
+//   2xNH i 1xHN SVP => 1 niezrealizowana). Inne kody w Fixed (RD, CA, BA, NR, FP) NIE są
+//   offsetowane przez HN SVP i zawsze liczą się jako niezrealizowane.
+// var1 = dzienna stawka paliwowa/ryczałtowa (PLN, stała kwota niezależna od liczby stopów)
+// km = "Variable 2" z faktury — kilometry przejechane danego dnia na trasie
+// money = dodatkowe pozycje pieniężne (bonusy/malusy/dopłaty), niepowiązane ze stopami
+const DATA = [
+{date:'2026-08-01',route:'Trasa A',b:[26,1,0,0],fixed:0,var1:171.13,km:58,money:[],netto:865.96},
+{date:'2026-08-03',route:'Trasa A',b:[26,6,4,3],fixed:0,var1:171.13,km:55,money:[],netto:1132.03},
+{date:'2026-08-04',route:'Trasa A',b:[25,5,0,0],fixed:0,var1:171.13,km:64,money:[],netto:933.13},
+{date:'2026-08-05',route:'Trasa A',b:[23,1,1,0],fixed:0,var1:171.13,km:59,money:[],netto:810.43},
+{date:'2026-08-06',route:'Trasa A',b:[23,1,0,0],fixed:0,var1:171.13,km:88,money:[],netto:788.47},
+{date:'2026-08-07',route:'Trasa A',b:[21,6,3,0],fixed:2,var1:171.13,km:68,money:[],netto:918.94},
+{date:'2026-08-08',route:'Trasa A',b:[25,3,4,0],fixed:0,var1:171.13,km:68,money:[],netto:974.47},
+{date:'2026-08-10',route:'Trasa A',b:[22,1,3,2],fixed:0,var1:171.13,km:72,money:[],netto:869.84},
+{date:'2026-08-11',route:'Trasa A',b:[23,6,0,0],fixed:1,var1:171.13,km:65,money:[],netto:904.72},
+{date:'2026-08-12',route:'Trasa A',b:[24,3,4,2],fixed:0,var1:171.13,km:52,money:[],netto:989.96},
+{date:'2026-08-13',route:'Trasa A',b:[24,3,0,2],fixed:0,var1:171.13,km:75,money:[],netto:902.12},
+{date:'2026-08-14',route:'Trasa A',b:[26,4,1,1],fixed:1,var1:171.13,km:66,money:[],netto:978.33},
+{date:'2026-08-15',route:'Trasa A',b:[24,5,3,0],fixed:1,var1:171.13,km:81,money:[["Dopłata za windę",130]],netto:1103.18},
+{date:'2026-08-17',route:'Trasa A',b:[21,2,1,0],fixed:0,var1:190.61,km:74,money:[],netto:801.5},
+{date:'2026-08-18',route:'Trasa A',b:[24,5,2,0],fixed:0,var1:190.61,km:84,money:[],netto:970.7},
+{date:'2026-08-19',route:'Trasa A',b:[26,3,0,1],fixed:1,var1:190.61,km:82,money:[],netto:952.6},
+{date:'2026-08-20',route:'Trasa A',b:[25,1,2,0],fixed:0,var1:190.61,km:59,money:[],netto:903.53},
+{date:'2026-08-21',route:'Trasa A',b:[22,5,4,0],fixed:0,var1:190.61,km:51,money:[["Bonus jakościowy",300]],netto:1262.96},
+{date:'2026-08-22',route:'Trasa A',b:[23,2,0,0],fixed:0,var1:190.61,km:54,money:[],netto:831.2},
+{date:'2026-08-24',route:'Trasa A',b:[25,2,1,0],fixed:0,var1:190.61,km:83,money:[],netto:904.82},
+{date:'2026-08-25',route:'Trasa A',b:[24,2,4,0],fixed:1,var1:190.61,km:75,money:[],netto:944.87},
+{date:'2026-08-26',route:'Trasa A',b:[26,3,3,0],fixed:1,var1:190.61,km:64,money:[["Dopłata za windę",130]],netto:1127.82},
+{date:'2026-08-27',route:'Trasa A',b:[25,5,1,0],fixed:0,var1:190.61,km:90,money:[["Dopłata za windę",130]],netto:1104.57},
+{date:'2026-08-28',route:'Trasa A',b:[21,3,0,0],fixed:0,var1:190.61,km:63,money:[],netto:802.79},
+{date:'2026-08-29',route:'Trasa A',b:[26,5,4,0],fixed:0,var1:190.61,km:56,money:[["Bonus jakościowy",300]],netto:1366.28},
+{date:'2026-08-31',route:'Trasa A',b:[23,4,3,0],fixed:2,var1:190.61,km:53,money:[],netto:943.58},
+{date:'2026-08-01',route:'Trasa B',b:[37,1,1,3],fixed:0,var1:48.59,km:246,money:[],netto:668.31},
+{date:'2026-08-03',route:'Trasa B',b:[36,1,3,0],fixed:1,var1:48.59,km:338,money:[],netto:642.7},
+{date:'2026-08-04',route:'Trasa B',b:[35,2,1,0],fixed:0,var1:48.59,km:215,money:[],netto:615.59},
+{date:'2026-08-05',route:'Trasa B',b:[35,4,2,0],fixed:0,var1:48.59,km:324,money:[],netto:655.49},
+{date:'2026-08-06',route:'Trasa B',b:[37,2,0,0],fixed:1,var1:48.59,km:214,money:[["Bonus jakościowy",300]],netto:932.91},
+{date:'2026-08-07',route:'Trasa B',b:[39,5,1,0],fixed:0,var1:48.59,km:217,money:[],netto:716.48},
+{date:'2026-08-08',route:'Trasa B',b:[36,4,0,0],fixed:1,var1:48.59,km:210,money:[],netto:644.95},
+{date:'2026-08-10',route:'Trasa B',b:[38,6,4,0],fixed:0,var1:48.59,km:252,money:[],netto:753.37},
+{date:'2026-08-11',route:'Trasa B',b:[37,2,2,0],fixed:1,var1:48.59,km:280,money:[],netto:658.51},
+{date:'2026-08-12',route:'Trasa B',b:[35,1,3,0],fixed:1,var1:48.59,km:337,money:[],netto:627.64},
+{date:'2026-08-13',route:'Trasa B',b:[37,2,2,0],fixed:0,var1:48.59,km:272,money:[],netto:658.51},
+{date:'2026-08-14',route:'Trasa B',b:[39,6,2,0],fixed:0,var1:48.59,km:276,money:[],netto:742.83},
+{date:'2026-08-15',route:'Trasa B',b:[35,2,2,0],fixed:0,var1:48.59,km:269,money:[],netto:628.39},
+{date:'2026-08-17',route:'Trasa B',b:[36,6,2,2],fixed:0,var1:54.12,km:213,money:[["Bonus jakościowy",300]],netto:1027.28},
+{date:'2026-08-18',route:'Trasa B',b:[37,1,0,0],fixed:0,var1:54.12,km:241,money:[],netto:624.89},
+{date:'2026-08-19',route:'Trasa B',b:[39,6,3,0],fixed:0,var1:54.12,km:238,money:[],netto:761.16},
+{date:'2026-08-20',route:'Trasa B',b:[37,5,4,1],fixed:0,var1:54.12,km:293,money:[],netto:742.34},
+{date:'2026-08-21',route:'Trasa B',b:[35,3,1,0],fixed:2,var1:54.12,km:304,money:[],netto:634.67},
+{date:'2026-08-22',route:'Trasa B',b:[40,2,1,0],fixed:0,var1:54.12,km:206,money:[],netto:696.42},
+{date:'2026-08-24',route:'Trasa B',b:[37,4,1,0],fixed:1,var1:54.12,km:256,money:[],netto:678.34},
+{date:'2026-08-25',route:'Trasa B',b:[38,3,2,0],fixed:0,var1:54.12,km:206,money:[],netto:692.65},
+{date:'2026-08-26',route:'Trasa B',b:[38,3,2,0],fixed:0,var1:54.12,km:330,money:[],netto:692.65},
+{date:'2026-08-27',route:'Trasa B',b:[39,3,0,2],fixed:1,var1:54.12,km:267,money:[["Dopłata specjalna",180]],netto:886.21},
+{date:'2026-08-28',route:'Trasa B',b:[38,3,2,0],fixed:1,var1:54.12,km:248,money:[],netto:692.65},
+{date:'2026-08-29',route:'Trasa B',b:[40,4,0,0],fixed:0,var1:54.12,km:310,money:[["Dopłata specjalna",180]],netto:890.72},
+{date:'2026-08-31',route:'Trasa B',b:[37,5,2,0],fixed:0,var1:54.12,km:329,money:[],netto:704.69},
+];
+
+const VAT_RATE = 0.23;
+DATA.forEach(d=>{ d.stops = d.b.reduce((a,c)=>a+c,0); d.moneyTotal = d.money.reduce((a,m)=>a+m[1],0); });
+
+// ===================== CELE KPI =====================
+const SPR_TARGET = { 'Trasa A':23, 'Trasa B':37 };   // stopy na trasę / dzień
+const SPR_STRETCH_MULT = 1.08;             // dodatkowy próg "SPR +8%"
+const UNDEL_TARGET_PCT = 2;                // cel: % stopów niezrealizowanych < 2%
+
+function calcRouteStats(r){
+  const rows = DATA.filter(d=>d.route===r);
+  const days = new Set(rows.map(d=>d.date)).size;
+  const totalStops = rows.reduce((a,d)=>a+d.stops,0);
+  const totalFixed = rows.reduce((a,d)=>a+d.fixed,0);
+  return { days, totalStops, totalFixed,
+    avgSPR: totalStops/days,
+    undelPct: totalFixed/(totalStops+totalFixed)*100 };
+}
+function pill(ok){ return `<span class="pill ${ok?'green':'red'}">${ok?'CEL SPEŁNIONY':'CEL NIESPEŁNIONY'}</span>`; }
+
+function renderKpiTargets(){
+  const el = document.getElementById('kpiTargetGrid');
+  if(!el) return;
+  el.innerHTML = ['Trasa A','Trasa B'].map(r=>{
+    const s = calcRouteStats(r);
+    const target = SPR_TARGET[r];
+    const stretch = target*SPR_STRETCH_MULT;
+    const sprOk = s.avgSPR >= target;
+    const stretchOk = s.avgSPR >= stretch;
+    const undelOk = s.undelPct <= UNDEL_TARGET_PCT;
+    return `<div class="route-card">
+      <h3><span class="tag ${r.toLowerCase()}">${r}</span> średnio ${s.avgSPR.toFixed(1)} stopów/dzień</h3>
+      <div class="kpi-line"><span class="lbl2">SPR — cel ${target}/dzień</span><span class="right2"><span class="val2">${s.avgSPR.toFixed(1)}</span>${pill(sprOk)}</span></div>
+      <div class="kpi-line"><span class="lbl2">SPR +8% — cel ${stretch.toFixed(1)}/dzień</span><span class="right2"><span class="val2">${s.avgSPR.toFixed(1)}</span>${pill(stretchOk)}</span></div>
+      <div class="kpi-line"><span class="lbl2">%Undel — cel &lt;${UNDEL_TARGET_PCT}%</span><span class="right2"><span class="val2">${s.undelPct.toFixed(2)}%</span>${pill(undelOk)}</span></div>
+    </div>`;
+  }).join('');
+}
+
+let view = 'fin';
+let route = 'all';
+let chart;
+
+function fmtPLN(n){ return n.toLocaleString('pl-PL',{minimumFractionDigits:2,maximumFractionDigits:2}) + ' PLN'; }
+function fmtNum(n){ return n.toLocaleString('pl-PL'); }
+function filtered(){ return route==='all' ? DATA : DATA.filter(d=>d.route===route); }
+
+function setView(v){
+  view = v;
+  document.getElementById('btnFin').classList.toggle('active', v==='fin');
+  document.getElementById('btnOps').classList.toggle('active', v==='ops');
+  const badge = document.getElementById('viewBadge');
+  if(v==='fin'){ badge.className='badge fin'; badge.textContent='Dane finansowe widoczne — tylko dla właściciela'; }
+  else{ badge.className='badge ops'; badge.textContent='Widok operacyjny — bez kwot, do udostępnienia kurierom'; }
+  render();
+}
+function setRoute(r){
+  route = r;
+  document.getElementById('rAll').classList.toggle('active', r==='all');
+  document.getElementById('rTrasaA').classList.toggle('active', r==='Trasa A');
+  document.getElementById('rTrasaB').classList.toggle('active', r==='Trasa B');
+  render();
+}
+
+function render(){
+  renderKPIs();
+  renderKpiTargets();
+  renderChart();
+  renderStrips();
+  renderTable();
+}
+
+function renderKPIs(){
+  const rows = filtered();
+  const el = document.getElementById('kpiRow');
+  const totalStops = rows.reduce((a,d)=>a+d.stops,0);
+  const totalFixed = rows.reduce((a,d)=>a+d.fixed,0);
+  const totalKm = rows.reduce((a,d)=>a+d.km,0);
+  const pctFixed = (totalFixed/(totalStops+totalFixed)*100);
+  const days = new Set(rows.map(d=>d.date)).size;
+
+  if(view==='fin'){
+    const netto = rows.reduce((a,d)=>a+d.netto,0);
+    const vat = netto*VAT_RATE;
+    const brutto = netto+vat;
+    const money = rows.reduce((a,d)=>a+d.moneyTotal,0);
+    const avgPerStop = netto/totalStops;
+    el.innerHTML = `
+      <div class="kpi"><div class="lbl">Kwota netto (okres)</div><div class="val mono">${fmtPLN(netto)}</div><div class="sub">VAT 23%: ${fmtPLN(vat)}</div></div>
+      <div class="kpi"><div class="lbl">Kwota brutto</div><div class="val mono">${fmtPLN(brutto)}</div><div class="sub">do zapłaty wg faktur zbiorczych przewoźnika</div></div>
+      <div class="kpi"><div class="lbl">Śr. stawka za stop</div><div class="val mono">${avgPerStop.toFixed(2)} PLN</div><div class="sub">${fmtNum(totalStops)} stopów zrealizowanych</div></div>
+      <div class="kpi warn"><div class="lbl">Dopłaty / bonusy / malusy</div><div class="val mono">${fmtPLN(money)}</div><div class="sub">windy, PU OFF, ryczałty, bonus-malus</div></div>
+      <div class="kpi"><div class="lbl">Dni rozliczeniowe</div><div class="val mono">${days}</div><div class="sub">01–31.08.2026</div></div>
+    `;
+  } else {
+    el.innerHTML = `
+      <div class="kpi good"><div class="lbl">Stopy zrealizowane</div><div class="val mono">${fmtNum(totalStops)}</div><div class="sub">suma pasm Band 1–4</div></div>
+      <div class="kpi ${pctFixed>4?'warn':'good'}"><div class="lbl">Stopy niezrealizowane</div><div class="val mono">${totalFixed} (${pctFixed.toFixed(1)}%)</div><div class="sub">cel KPI: możliwie najniższy %</div></div>
+      <div class="kpi"><div class="lbl">Przejechane km</div><div class="val mono">${fmtNum(totalKm)} km</div><div class="sub">śr. ${(totalKm/days).toFixed(0)} km/dzień</div></div>
+      <div class="kpi"><div class="lbl">Śr. stopów / dzień</div><div class="val mono">${(totalStops/days).toFixed(1)}</div><div class="sub">${days} dni w okresie</div></div>
+      <div class="kpi"><div class="lbl">Stopów / km</div><div class="val mono">${(totalStops/totalKm).toFixed(2)}</div><div class="sub">gęstość doręczeń</div></div>
+    `;
+  }
+}
+
+// Prosty wykres słupkowo-liniowy rysowany bezpośrednio na Canvas (bez zewnętrznych bibliotek)
+function drawChart(canvas, labels, barGroups, line){
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.parentElement.getBoundingClientRect();
+  const W = Math.max(300, rect.width), H = 300;
+  canvas.width = W*dpr; canvas.height = H*dpr; canvas.style.width = W+'px'; canvas.style.height = H+'px';
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,W,H);
+
+  const padL=54, padR = line ? 54 : 16, padT=16, padB=32;
+  const plotW = W - padL - padR, plotH = H - padT - padB;
+  const n = labels.length;
+  const maxBar = Math.max(1, ...barGroups.flatMap(g=>g.data));
+  const maxLine = line ? Math.max(1, ...line.data) : 1;
+
+  // siatka + oś lewa
+  ctx.strokeStyle = '#E4E1D8'; ctx.fillStyle = '#5B6169';
+  ctx.font = '10.5px Consolas, "Courier New", monospace'; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  const steps = 4;
+  for(let i=0;i<=steps;i++){
+    const y = padT + plotH - (plotH*i/steps);
+    ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(padL+plotW,y); ctx.stroke();
+    ctx.fillText(Math.round(maxBar*i/steps).toLocaleString('pl-PL'), padL-8, y);
+  }
+
+  // słupki (grupowane)
+  const groupW = plotW / Math.max(n,1);
+  const barGap = 3;
+  const barW = Math.max(2, (groupW - barGap*2) / barGroups.length - 2);
+  labels.forEach((lab,i)=>{
+    const gx = padL + i*groupW;
+    barGroups.forEach((g,gi)=>{
+      const v = g.data[i] || 0;
+      const h = plotH * (v/maxBar);
+      const x = gx + barGap + gi*(barW+2);
+      const y = padT + plotH - h;
+      ctx.fillStyle = g.color;
+      ctx.fillRect(x, y, barW, Math.max(h,0));
+    });
+  });
+
+  // etykiety osi X (co n-ta, żeby się nie zlewały)
+  ctx.fillStyle = '#5B6169'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  const every = n > 18 ? 3 : n > 11 ? 2 : 1;
+  labels.forEach((lab,i)=>{
+    if(i % every !== 0) return;
+    ctx.fillText(lab, padL + i*groupW + groupW/2, padT + plotH + 8);
+  });
+
+  // linia (prawa oś)
+  if(line){
+    ctx.strokeStyle = line.color; ctx.lineWidth = 2; ctx.beginPath();
+    line.data.forEach((v,i)=>{
+      const x = padL + i*groupW + groupW/2;
+      const y = padT + plotH - plotH*(v/maxLine);
+      if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    });
+    ctx.stroke();
+    ctx.fillStyle = line.color;
+    line.data.forEach((v,i)=>{
+      const x = padL + i*groupW + groupW/2;
+      const y = padT + plotH - plotH*(v/maxLine);
+      ctx.beginPath(); ctx.arc(x,y,2.5,0,Math.PI*2); ctx.fill();
+    });
+    ctx.fillStyle = '#5B6169'; ctx.textAlign = 'left'; ctx.font = '10.5px Consolas, "Courier New", monospace';
+    for(let i=0;i<=steps;i++){
+      const y = padT + plotH - (plotH*i/steps);
+      ctx.fillText(Math.round(maxLine*i/steps).toLocaleString('pl-PL'), padL+plotW+8, y);
+    }
+  }
+}
+
+function renderLegend(items){
+  const wrap = document.getElementById('chartLegend');
+  wrap.innerHTML = items.map(it=>`<span><i class="sw" style="background:${it.color}"></i>${it.label}</span>`).join('');
+}
+
+function renderChart(){
+  const rows = filtered();
+  const dates = [...new Set(rows.map(d=>d.date))].sort();
+  const labels = dates.map(d=>d.slice(8)+'.'+d.slice(5,7));
+  const routes = route==='all' ? ['Trasa A','Trasa B'] : [route];
+  const colors = {'Trasa A':'#2A6F97', 'Trasa B':'#1B1B1F'};
+  const canvas = document.getElementById('mainChart');
+
+  document.getElementById('chartTitle').textContent = view==='fin' ? 'Kwota netto dziennie' : 'Stopy i kilometry dziennie';
+  document.getElementById('chartDesc').textContent = view==='fin'
+    ? 'Słupki: kwota netto wg trasy (lewa oś). Linia: narastająco w okresie (prawa oś).'
+    : 'Słupki: liczba zrealizowanych stopów wg trasy (lewa oś). Linia: przejechane kilometry (prawa oś).';
+
+  if(view==='fin'){
+    const barGroups = routes.map(r=>({
+      label:r, color:colors[r],
+      data: dates.map(dt=>{ const rec = rows.find(d=>d.date===dt && d.route===r); return rec?rec.netto:0; })
+    }));
+    let running=0;
+    const cum = dates.map(dt=> running += rows.filter(d=>d.date===dt).reduce((a,d)=>a+d.netto,0));
+    const line = {label:'Narastająco', color:'#C77F1A', data:cum};
+    drawChart(canvas, labels, barGroups, line);
+    renderLegend([...barGroups.map(g=>({label:g.label+' — kwota netto',color:g.color})), {label:line.label+' (PLN)',color:line.color}]);
+  } else {
+    const barGroups = routes.map(r=>({
+      label:r, color:colors[r],
+      data: dates.map(dt=>{ const rec = rows.find(d=>d.date===dt && d.route===r); return rec?rec.stops:0; })
+    }));
+    const km = dates.map(dt=> rows.filter(d=>d.date===dt).reduce((a,d)=>a+d.km,0));
+    const line = {label:'km / dzień', color:'#C77F1A', data:km};
+    drawChart(canvas, labels, barGroups, line);
+    renderLegend([...barGroups.map(g=>({label:g.label+' — stopy',color:g.color})), {label:line.label,color:line.color}]);
+  }
+}
+
+window.addEventListener('resize', ()=>{ clearTimeout(window._rt); window._rt=setTimeout(renderChart,150); });
+
+function renderStrips(){
+  const rows = filtered().slice().sort((a,b)=> a.date===b.date ? a.route.localeCompare(b.route) : a.date.localeCompare(b.date));
+  const el = document.getElementById('strips');
+  const bandColors = ['#F4A300','#E8A33D','#C77F1A','#8A5A00'];
+  el.innerHTML = rows.map(d=>{
+    const total = d.stops + d.fixed;
+    const segs = d.b.map((v,i)=> v>0 ? `<div class="seg-block" style="width:${(v/total*100).toFixed(2)}%;background:${bandColors[i]}" title="Band ${i+1}: ${v} stopów"></div>` : '').join('');
+    const fixedSeg = d.fixed>0 ? `<div class="seg-block" style="width:${(d.fixed/total*100).toFixed(2)}%;background:repeating-linear-gradient(45deg,#2A6F97,#2A6F97 3px,#fff 3px,#fff 6px)" title="Niezrealizowane: ${d.fixed}"></div>` : '';
+    const dt = new Date(d.date);
+    const dstr = dt.toLocaleDateString('pl-PL',{day:'2-digit',month:'2-digit'});
+    return `<div class="strip-row">
+      <div class="strip-date">${dstr} <span class="tag ${d.route.toLowerCase().replace(' ','')}">${d.route}</span></div>
+      <div class="strip-track">${segs}${fixedSeg}</div>
+      <div class="strip-km">${d.km} km</div>
+    </div>`;
+  }).join('');
+}
+
+function renderTable(){
+  const rows = filtered().slice().sort((a,b)=> a.date===b.date ? a.route.localeCompare(b.route) : a.date.localeCompare(b.date));
+  const head = document.getElementById('tableHead');
+  const body = document.getElementById('tableBody');
+  const foot = document.getElementById('tableFoot');
+
+  if(view==='fin'){
+    document.getElementById('tableTitle').textContent = 'Zestawienie finansowe — dzień / trasa';
+    document.getElementById('tableDesc').textContent = 'Kwoty netto wg linii faktury zbiorczej przewoźnika. Dopłaty obejmują m.in. wymagany samochód z windą, PU OFF, ryczałty specjalne, bonus/malus.';
+    head.innerHTML = `<th>Data</th><th>Trasa</th><th>Stopy</th><th>Paliwo/ryczałt</th><th>Dopłaty</th><th>Kwota netto</th>`;
+    body.innerHTML = rows.map(d=>`<tr>
+      <td>${d.date.slice(8)}.${d.date.slice(5,7)}.2026</td>
+      <td class="route"><span class="tag ${d.route.toLowerCase().replace(' ','')}">${d.route}</span></td>
+      <td>${d.stops}${d.fixed?` <span class="num-bad">(-${d.fixed})</span>`:''}</td>
+      <td>${d.var1.toFixed(2)} PLN</td>
+      <td class="${d.moneyTotal?'money-row':''}">${d.moneyTotal ? fmtPLN(d.moneyTotal) : '—'}</td>
+      <td><strong>${fmtPLN(d.netto)}</strong></td>
+    </tr>`).join('');
+    const netto = rows.reduce((a,d)=>a+d.netto,0);
+    const money = rows.reduce((a,d)=>a+d.moneyTotal,0);
+    const stops = rows.reduce((a,d)=>a+d.stops,0);
+    foot.innerHTML = `<td colspan="2">RAZEM</td><td>${stops}</td><td></td><td>${fmtPLN(money)}</td><td>${fmtPLN(netto)}</td>`;
+    document.getElementById('footNote').innerHTML = `Suma netto powinna zgadzać się z fakturami źródłowymi (faktury demonstracyjne demo-2026-001, demo-2026-002 — dane w 100% syntetyczne, wygenerowane na potrzeby portfolio). VAT 23% doliczany osobno na fakturze zbiorczej.`;
+  } else {
+    document.getElementById('tableTitle').textContent = 'Zestawienie operacyjne — dzień / trasa';
+    document.getElementById('tableDesc').textContent = 'Bez danych finansowych. "Km" pochodzi z pozycji Variable 2 na fakturze przewoźnika (opisanej jako stawka paliwowa za litry — w praktyce odpowiada liczbie kilometrów na trasie danego dnia). Kolumna SPR porównuje stopy danego dnia z celem dziennym trasy.';
+    head.innerHTML = `<th>Data</th><th>Trasa</th><th>Stopy zreal.</th><th>Cel SPR</th><th>Niezreal.</th><th>%Undel</th><th>Km</th>`;
+    body.innerHTML = rows.map(d=>{
+      const undel = (d.fixed/(d.stops+d.fixed)*100);
+      const target = SPR_TARGET[d.route];
+      const sprOk = d.stops >= target;
+      return `<tr>
+      <td>${d.date.slice(8)}.${d.date.slice(5,7)}.2026</td>
+      <td class="route"><span class="tag ${d.route.toLowerCase().replace(' ','')}">${d.route}</span></td>
+      <td class="${sprOk?'num-good':'num-bad'}"><strong>${d.stops}</strong></td>
+      <td>${target}</td>
+      <td class="${d.fixed>0?'num-bad':''}">${d.fixed}</td>
+      <td class="${undel<=UNDEL_TARGET_PCT?'num-good':'num-bad'}">${undel.toFixed(1)}%</td>
+      <td>${d.km}</td>
+    </tr>`}).join('');
+    const stops = rows.reduce((a,d)=>a+d.stops,0);
+    const fixed = rows.reduce((a,d)=>a+d.fixed,0);
+    const km = rows.reduce((a,d)=>a+d.km,0);
+    foot.innerHTML = `<td colspan="2">RAZEM</td><td>${stops}</td><td>—</td><td>${fixed}</td><td>${(fixed/(stops+fixed)*100).toFixed(1)}%</td><td>${fmtNum(km)} km</td>`;
+    document.getElementById('footNote').innerHTML = `Cele KPI: SPR — Trasa A 23 stopów/dzień, Trasa B 37 stopów/dzień. %Undel — poniżej 2% na obu trasach. Zbiorcze porównanie ze średnią z całego okresu znajdziesz w panelu "Cele KPI" powyżej.`;
+  }
+}
+
+render();
+</script>
+</body>
+</html>
